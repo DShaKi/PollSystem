@@ -2,8 +2,9 @@ from db import *
 import re
 
 class Poll:
-    def __init__(self, id: int, title: str, options: list) -> None:
+    def __init__(self, id: int, activation: int, title: str, options: list) -> None:
         self.id = id
+        self.activation = activation
         self.title = title
         self.options = options
         
@@ -32,7 +33,7 @@ class Session:
         options = []
         for i in range(num):
             options.append(input(f"Option {i+1}: "))
-        poll = Poll(idd, title, options)
+        poll = Poll(idd, 1, title, options)
         print("Created")
         system.polls.append(poll)
         addPoll(poll, self.user)
@@ -42,21 +43,43 @@ class Session:
                 print(f"{i.id}. {i.title}")
                 
     def participate(self, poll: Poll) -> None:
-        for j in poll.options:
-            print(f"{poll.options.index(j)+1}. {j}")
-        num = int(input("Which option would u choose: "))
-        if num > len(poll.options)+1:
-            print("Sry this option doesn't exist")
+        if poll.activation == 1:
+            for j in poll.options:
+                print(f"{poll.options.index(j)+1}. {j}")
+            num = int(input("Which option would u choose: "))
+            if num > len(poll.options)+1:
+                print("Sry this option doesn't exist")
+            else:
+                participate(poll.id, num, self.user)
+                print("Submitted")
         else:
-            participate(poll.id, num, self.user)
+            print("Sry this poll is deactivated")
             
-    def deletePoll(self, poll: Poll):
+    def deletePoll(self, poll: Poll) -> None:
         if str(poll.id) in self.user.created_polls:
             self.user.created_polls.pop(self.user.created_polls.index(str(poll.id)))
             delPoll(self.user, poll.id)
             print("Deleted")
         else:
             print("This poll isn't created by you")
+            
+    def actPoll(self, poll: Poll) -> None:
+        if str(poll.id) in self.user.created_polls:
+            activation = actiPoll(poll.id)
+            poll.activation = activation
+            if activation == 1:
+                print("Poll activated")
+            else:
+                print("Poll deactivated")
+        else:
+            print("This poll isn't created by you")
+            
+    def showPollReaults(self, poll: Poll) -> None:
+        results = getPollResults(poll.id)
+        res_list = list(results.items())
+        print(poll.title)
+        for i in res_list:
+            print(i[0] + " --> " + i[1] + " votes")
 
 class System:
     def __init__(self):
@@ -71,7 +94,9 @@ class System:
                 print("2. List of polls")
                 print("3. Participate in a poll")
                 print("4. Delete your poll")
-                print("5. Exit")
+                print("5. Activate or deactivate your poll")
+                print("6. Poll results")
+                print("7. Exit")
                 code = int(input())
                 if code == 1:
                     title = input("Enter ur poll title: ")
@@ -84,7 +109,6 @@ class System:
                     for i in self.polls:
                         if i.id == pollid:
                             self.s.participate(i)
-                            print("Submitted")
                             break
                     else:
                         print("No poll found")
@@ -93,6 +117,22 @@ class System:
                     for i in self.polls:
                         if i.id == pollid:
                             self.s.deletePoll(i)
+                            break
+                    else:
+                        print("No poll found")
+                elif code == 5:
+                    pollid = int(input("Enter your poll id: "))
+                    for i in self.polls:
+                        if i.id == pollid:
+                            self.s.actPoll(i)
+                            break
+                    else:
+                        print("No poll found")
+                elif code == 6:
+                    pollid = int(input("Enter your poll id: "))
+                    for i in self.polls:
+                        if i.id == pollid:
+                            self.s.showPollReaults(i)
                             break
                     else:
                         print("No poll found")

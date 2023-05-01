@@ -12,7 +12,7 @@ def addPoll(poll: poll.Poll, user: poll.User) -> None:
         if i != poll.options[-1]:
             options += ','
             votes += ','
-    conn.execute("INSERT INTO Poll VALUES(?, ?, ?, ?)", (poll.id, poll.title, options, votes, ))
+    conn.execute("INSERT INTO Poll VALUES(?, ?, ?, ?, ?)", (poll.id, 1, poll.title, options, votes, ))
     # Adding the created poll to user's profile
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM User WHERE ID = (?)", (user.id, ))
@@ -28,16 +28,41 @@ def getPolls() -> list:
     polls = []
     for p in db_polls:
         options = p[2].split(',')
-        polls.append(poll.Poll(p[0], p[1], options))
+        polls.append(poll.Poll(p[0], p[1], p[2], options))
     return polls
 
 def delPoll(user: poll.User, pollid: int) -> None:
     conn.execute("DELETE FROM Poll WHERE ID = (?)", (pollid, ))
     updated_user_polls = ""
     for i in range (len(user.created_polls)):
-        updated_user_polls += user.created_polls(i) + ','
+        updated_user_polls += user.created_polls[i] + ','
     conn.execute("UPDATE User SET createdPolls = (?) WHERE ID = (?)", (updated_user_polls, user.id))
     conn.commit()
+
+def actiPoll(pollid: int) -> bool:
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM Poll WHERE ID = (?)", (pollid, ))
+    db_poll = cursor.fetchall()
+    activation = int(db_poll[0][1])
+    print(activation)
+    if activation == 1:
+        new_activation = 0
+    elif activation == 0:
+        new_activation = 1
+    conn.execute("UPDATE Poll SET Activation = (?) WHERE ID = (?)", (new_activation, pollid, ))
+    conn.commit()
+    return new_activation
+
+def getPollResults(pollid) -> dict:
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM Poll WHERE ID = (?)", (pollid, ))
+    db_poll = cursor.fetchall()
+    options = db_poll[0][3].split(',')
+    votes = db_poll[0][4].split(',')
+    res = {}
+    for i in range(len(options)):
+        res[options[i]] = votes[i]
+    return res
 
 def participate(pollid: int, option: int, user: poll.Poll) -> None:
     cursor = conn.cursor()
@@ -45,7 +70,7 @@ def participate(pollid: int, option: int, user: poll.Poll) -> None:
     db_polls = cursor.fetchall()
     for p in db_polls:
         if p[0] == pollid:
-            options: list[str] = p[3].split(',')
+            options: list[str] = p[4].split(',')
             votes = ""
             for i in range(len(options)):
                 if i == option-1:
@@ -61,7 +86,7 @@ def participate(pollid: int, option: int, user: poll.Poll) -> None:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM User WHERE ID = (?)", (user.id, ))
             db_user = cursor.fetchall()
-            updated_user_polls = db_user[0][4]+str(poll.id)+","
+            updated_user_polls = db_user[0][4]+str(pollid)+","
             conn.execute("UPDATE User SET ParticipatedPolls = (?) WHERE ID = (?)", (updated_user_polls, user.id))
             conn.commit()
             break
