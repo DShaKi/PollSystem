@@ -12,12 +12,12 @@ class Poll:
         return answer
 
 class User:
-    def __init__(self, id:int, email: str, password: str) -> None:
+    def __init__(self, id:int, email: str, password: str, cp: list, pp: list) -> None:
         self.id = id
         self.email = email
         self.password = password
-        self.created_polls = []
-        self.participated_polls = []
+        self.created_polls = cp
+        self.participated_polls = pp
 
 class Session:
     def __init__(self, user: User, system: 'System') -> None:
@@ -35,7 +35,7 @@ class Session:
         poll = Poll(idd, title, options)
         print("Created")
         system.polls.append(poll)
-        addPoll(poll)
+        addPoll(poll, self.user)
         
     def showPolls(self) -> None:
         for i in system.polls:
@@ -48,7 +48,15 @@ class Session:
         if num > len(poll.options)+1:
             print("Sry this option doesn't exist")
         else:
-            participate(poll.id, num)
+            participate(poll.id, num, self.user)
+            
+    def deletePoll(self, poll: Poll):
+        if str(poll.id) in self.user.created_polls:
+            self.user.created_polls.pop(self.user.created_polls.index(str(poll.id)))
+            delPoll(self.user, poll.id)
+            print("Deleted")
+        else:
+            print("This poll isn't created by you")
 
 class System:
     def __init__(self):
@@ -61,8 +69,9 @@ class System:
             while True:
                 print("1. Create a new poll")
                 print("2. List of polls")
-                print("3. Prticipate in a poll")
-                print("4. Exit")
+                print("3. Participate in a poll")
+                print("4. Delete your poll")
+                print("5. Exit")
                 code = int(input())
                 if code == 1:
                     title = input("Enter ur poll title: ")
@@ -76,6 +85,14 @@ class System:
                         if i.id == pollid:
                             self.s.participate(i)
                             print("Submitted")
+                            break
+                    else:
+                        print("No poll found")
+                elif code == 4:
+                    pollid = int(input("Enter your poll id: "))
+                    for i in self.polls:
+                        if i.id == pollid:
+                            self.s.deletePoll(i)
                             break
                     else:
                         print("No poll found")
