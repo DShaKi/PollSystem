@@ -27,8 +27,8 @@ def getPolls() -> list:
     db_polls = cursor.fetchall()
     polls = []
     for p in db_polls:
-        options = p[2].split(',')
-        polls.append(poll.Poll(p[0], p[1], p[2], options))
+        options = p[3].split(',')
+        polls.append(poll.Poll(int(p[0]), int(p[1]), p[2], options))
     return polls
 
 def delPoll(user: poll.User, pollid: int) -> None:

@@ -36,6 +36,7 @@ class Session:
         poll = Poll(idd, 1, title, options)
         print("Created")
         system.polls.append(poll)
+        self.user.created_polls.append(str(poll.id))
         addPoll(poll, self.user)
         
     def showPolls(self) -> None:
@@ -51,6 +52,7 @@ class Session:
                 print("Sry this option doesn't exist")
             else:
                 participate(poll.id, num, self.user)
+                self.user.participated_polls.append(str(poll.id))
                 print("Submitted")
         else:
             print("Sry this poll is deactivated")
@@ -108,7 +110,13 @@ class System:
                     pollid = int(input("Enter poll id: "))
                     for i in self.polls:
                         if i.id == pollid:
-                            self.s.participate(i)
+                            flag = True
+                            for p in self.s.user.participated_polls:
+                                if p == str(i.id):
+                                    flag = False
+                                    print("Sry you have participated in this poll")
+                            if flag == True:
+                                self.s.participate(i)
                             break
                     else:
                         print("No poll found")
@@ -172,9 +180,9 @@ class System:
                 else:
                     print("passwords do not match")
             if self.users != []:
-                user = User(self.users.index(self.users[-1])+1, email, password)
+                user = User(self.users.index(self.users[-1])+1, email, password, "", "")
             else:
-                user = User(0, email, password)
+                user = User(0, email, password, "", "")
             self.users.append(user)
             addUser(user)
             self.s = Session(user, self)
