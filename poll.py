@@ -41,7 +41,11 @@ class Session:
         
     def showPolls(self) -> None:
         for i in system.polls:
-                print(f"{i.id}. {i.title}")
+            if i.activation == 1:
+                activation = "Active"
+            else:
+                activation = "DeActive"   
+            print(f"{i.id}. {i.title} ({activation})")
                 
     def participate(self, poll: Poll) -> None:
         if poll.activation == 1:
